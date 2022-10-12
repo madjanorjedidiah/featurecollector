@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Feature Collector</title>
+	<link rel="stylesheet" type="text/css" href="/static/collector/leaflet/leaflet.css">
+	<link rel="stylesheet" type="text/css" href="/static/collector/bootstrap/css/bootstrap.css">
+	<style type="text/css">
+		.leaflet-popup-content{
+			width: 200px;
+		}
+	</style>
+</head>
+<body>
+
+<div id="map" style="height: 100vh">
+	<p>Here</p>
+</div>
+
+
+<script type="text/javascript" src="/static/collector/js/jquery.min.js"></script>
+<script type="text/javascript" src="/static/collector/leaflet/leaflet.js"></script>
+<script type="text/javascript" src="/static/collector/bootstrap/js/bootstrap.js"></script>
+<script type="text/javascript" src="/static/collector/js/main.js"></script>
+<script type="text/javascript">
+	
+	map.on('click', function(e){
+		let marker = L.marker([e.latlng.lat, e.latlng.lng], {
+			draggable: true
+		}).addTo(map);
+
+
+		var popupContent = `
+		<div>
+			<form method="post" id="form" enctype="multipart/form-data">
+				{% csrf_token %}
+		        <div class="form-group mb-3">
+		            <input class="form-control" id="feature_name" name="feature_name" required=""
+		                placeholder="Enter your feature_name">
+
+		            <input class="form-control" id="lat" value=${e.latlng.lat} name="lat" required=""
+		                placeholder="Enter your lat" style="display: none;">
+
+		            <input class="form-control" id="lon" value=${e.latlng.lng} name="lon" required=""
+		                placeholder="Enter your lon" style="display: none;">
+		        </div>
+		        <button type="button" id="save" style="background-color: #4e8deb; color:white; border-radius: 5px;">
+		         Submit </button>
+			</form>
+		</div>`
+
+		marker.bindPopup(popupContent).openPopup();
+
+		$('#save').click(function(e){
+			e.preventDefault();
+
+			var data = new FormData($('#form').get(0));
+			var token = "{{csrf_token}}"
+			$.ajax({
+				url: '/save_feature',
+				method:'POST',
+				headers:{"X-CSRFToken": token},
+				data: data,
+				contentType: "multipart/form-data",
+				processData: false,
+        		contentType: false,
+				success: function(data){
+					if (data == 'done'){
+						marker.closePopup()
+						map.removeLayer(marker)
+					} else {
+						alert('Check your data being passed.')
+					}
+				}
+			})
+		})
+	})
+</script>
+</body>
+</html>
